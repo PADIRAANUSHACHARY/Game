@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .cell {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s ease-in-out;
+      background-color: #423F3E; /* Desired shade of gray */
+      color: white;
+      border-radius: 8px;
+    }
+
+    .cell:hover {
+      transform: translateY(-2px);
+    }
+
+    .win {
+      text-decoration: line-through;
+    }
+
+    .celebration-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #f3f4f6;
+      border: 1px solid #d1d5db;
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 1000;
+    }
+
+    .celebration-text {
+      font-size: 16px;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    .btn-gray {
+      background-color: #d1d5db;
+      border-radius: 8px;
+      font-weight: bold;
+     /* Shade of gray */
+    }
+  </style>
+</head>
+<body class="bg-gray-200">
+  <div class="container mx-auto my-10 text-center">
+    <h1 class="text-4xl font-bold mb-5">Tic Tac Toe</h1>
+    <div id="modeButtons" class="mb-5">
+      <button id="singlePlayerBtn" class="mr-3 px-4 py-2 bg-gray-700 text-black font-semibold rounded btn-gray">Single Player</button>
+      <button id="twoPlayerBtn" class="px-4 py-2 bg-gray-700 text-black font-semibold rounded btn-gray">Two Players</button>
+    </div>
+    <div id="board" class="grid grid-cols-3 gap-2 w-64 mx-auto mb-5">
+      <!-- Tic Tac Toe cells will be dynamically generated here -->
+    </div>
+    <div id="celebration" class="hidden"></div>
+    <button id="backBtn" class="mt-5 px-4 py-2 bg-gray-700 text-black font-semibold rounded btn-gray">Back</button>
+    <a href="C:\Users\sai ganesh\OneDrive\documents\zoom\2024-01-08 20.06.01 Anusha Chary's Zoom Meeting\Home.html"><button id="quitBtn" class="mt-5 px-4 py-2 bg-gray-700 text-black font-semibold rounded btn-gray">Quit</button></a>
+  </div>
+
+  <script>
+    // JavaScript code goes here
+    const board = document.getElementById('board');
+    const resetBtn = document.getElementById('resetBtn');
+    const singlePlayerBtn = document.getElementById('singlePlayerBtn');
+    const twoPlayerBtn = document.getElementById('twoPlayerBtn');
+    const celebration = document.getElementById('celebration');
+    const backBtn = document.getElementById('backBtn');
+
+    let currentPlayer = 'X';
+    let boardState = ['', '', '', '', '', '', '', '', ''];
+    let gameover = false;
+    let singlePlayerMode = true;
+
+    // Function to render the board
+    function renderBoard() {
+      board.innerHTML = '';
+      boardState.forEach((cell, index) => {
+        const cellElement = document.createElement('div');
+        cellElement.textContent = cell === 'X' || cell === 'O' ? cell : '';
+        cellElement.id = `cell-${index}`;
+        cellElement.classList.add('cell', 'border', 'border-gray-500', 'h-20', 'flex', 'items-center', 'justify-center', 'text-4xl', 'font-bold', 'cursor-pointer');
+        cellElement.addEventListener('click', () => {
+          if (cell === '' && !gameover && (!singlePlayerMode || currentPlayer === 'X')) {
+            makeMove(index);
+          }
+        });
+        board.appendChild(cellElement);
+      });
+    }
+
+    // Function to handle player moves
+    function makeMove(index) {
+      if (gameover) return;
+
+      boardState[index] = currentPlayer;
+      renderBoard();
+      
+      if (checkWinner(currentPlayer)) {
+        displayCelebration(`Congratulations ${currentPlayer} wins!`);
+        gameover = true;
+      } else if (boardState.every(cell => cell !== '')) {
+        displayCelebration("It's a draw!");
+        gameover = true;
+      } else {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        if (singlePlayerMode && currentPlayer === 'O') {
+          setTimeout(() => computerMove(), 500);
+        }
+      }
+    }
+
+    // Function to handle computer move in single-player mode
+    function computerMove() {
+      const emptyCells = boardState.reduce((acc, cell, index) => {
+        if (cell === '') acc.push(index);
+        return acc;
+      }, []);
+      
+      const randomIndex = Math.floor(Math.random() * emptyCells.length);
+      makeMove(emptyCells[randomIndex]);
+    }
+
+    // Function to check for a winner
+    function checkWinner(player) {
+      const winConditions = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+        [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+        [0, 4, 8], [2, 4, 6]             // diagonals
+      ];
+
+      return winConditions.some(condition => {
+        return condition.every(index => boardState[index] === player);
+      });
+    }
+
+    // Function to show celebration message
+    function displayCelebration(messageText) {
+      celebration.innerHTML = `
+        <div class="celebration-box">
+          <div class="celebration-text">${messageText}</div>
+          <button id="startAgainBtn" class="px-2 py-1 bg-gray-700 text-black font-semibold rounded btn-gray">Start Again</button>
+        </div>
+      `;
+      celebration.classList.remove('hidden');
+
+      const startAgainBtn = document.getElementById('startAgainBtn');
+      startAgainBtn.addEventListener('click', () => resetGame());
+    }
+
+    // Event listeners for mode buttons
+    singlePlayerBtn.addEventListener('click', () => {
+      singlePlayerMode = true;
+      twoPlayerBtn.style.display = 'none';
+      singlePlayerBtn.style.display = 'inline-block';
+      resetGame();
+    });
+
+    twoPlayerBtn.addEventListener('click', () => {
+      singlePlayerMode = false;
+      twoPlayerBtn.style.display = 'inline-block';
+      singlePlayerBtn.style.display = 'none';
+      resetGame();
+    });
+    
+    backBtn.addEventListener('click', () => {
+      singlePlayerBtn.style.display = 'inline-block'; // Display single player button
+      twoPlayerBtn.style.display = 'inline-block'; // Display two player button
+    });
+
+    // Event listener for the quit button
+    
+    // Function to reset the game
+    function resetGame() {
+      currentPlayer = 'X';
+      boardState = ['', '', '', '', '', '', '', '', ''];
+      gameover = false;
+      celebration.classList.add('hidden');
+      renderBoard();
+    }
+
+    // Initial render
+    renderBoard();
+  </script>
+</body>
+</html>
